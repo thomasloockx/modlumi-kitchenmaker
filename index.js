@@ -101,11 +101,13 @@ function drawCabinet(ui, c) {
       { disabled: !recipe.isHinged(r.style), tip: t("Hinge side of a single door") }));
   });
   ui.section(t("Details"), () => {
-    const degrees = ui.slider(t("Opening"), Math.round((c.opening * 180) / Math.PI), {
-      min: 0, max: 110, decimals: 0, suffix: "°", tip: t("Opens the doors and pulls out the drawers, for views"),
+    const shownDegrees = Math.round((c.opening * 180) / Math.PI);
+    const degrees = ui.slider(t("Opening"), shownDegrees, {
+      min: 0, max: 110, integer: true, suffix: "°", tip: t("Opens the doors and pulls out the drawers, for views"),
       ...e("opening"),
     });
-    r.opening = (degrees * Math.PI) / 180;
+    // The slider shows whole degrees; the stored angle changes only when the user moves it.
+    if (degrees !== shownDegrees) r.opening = (degrees * Math.PI) / 180;
     r.gap = ui.length(t("Front gap"), c.gap, { min: 0, ...e("gap") });
     r.handles = ui.checkbox(t("Handles"), c.handles);
     r.worktop = ui.checkbox(t("Worktop"), c.worktop, { disabled: recipe.isWall(r.family), ...e("worktop") });
