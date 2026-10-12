@@ -7,7 +7,7 @@
   "license": "GPL-3.0-or-later",
   "apiVersion": 1,
   "requires": ["viewport", "files", "toolSelection", "propertiesWhen", "previewBoxes",
-    "formValidation", "listWidget", "locale", "numberFormat"],
+    "formValidation", "listWidget", "locale", "numberFormat", "tableActivation"],
   "permissions": {
     "files.dialog": true
   }
