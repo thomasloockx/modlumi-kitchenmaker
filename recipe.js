@@ -506,7 +506,9 @@ export function getCutList(cabinets, worktops) {
    * @param {"cabinets" | "worktops"} list @param {number} index
    */
   const add = (kind, finish, designation, size, source, repeatSources, list, index) => {
-    const sorted = /** @type {[number, number, number]} */ (size.map(roundSize).sort((a, b) => b - a));
+    const rounded = size.map(roundSize);
+    // A panel lists longest side first; a cutout keeps its width and depth, which say which way it goes.
+    const sorted = /** @type {[number, number, number]} */ (kind === "cutout" ? rounded : rounded.sort((a, b) => b - a));
     const key = JSON.stringify([kind, finish, designation, sorted]);
     let row = rows.get(key);
     if (!row) {

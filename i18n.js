@@ -198,9 +198,13 @@ const kFrench = {
   "CSV spreadsheet": "Tableur CSV",
   "{n} rows written to {file}": "{n} lignes écrites dans {file}",
   "Cut List": "Liste de débit",
-  "Finished sizes, length ≥ width ≥ thickness; identical parts grouped. Edge banding, grain and nesting aren't covered. Double-click a row to show its cabinets.":
-    "Dimensions finies, longueur ≥ largeur ≥ épaisseur ; pièces identiques regroupées. Les chants, le sens " +
-    "du fil et l'optimisation de découpe ne sont pas traités. Double-cliquez une ligne pour montrer ses armoires.",
+  "Finished sizes, length ≥ width ≥ thickness, but cutouts as width, depth, thickness; identical parts grouped. Edge banding, grain and nesting aren't covered. Double-click a row to show its cabinets.":
+    "Dimensions finies, longueur ≥ largeur ≥ épaisseur, mais largeur, profondeur, épaisseur pour les découpes ; " +
+    "pièces identiques regroupées. Les chants, le sens du fil et l'optimisation de découpe ne sont pas traités. " +
+    "Double-cliquez une ligne pour montrer ses armoires.",
+  "{n} of these are scaled or mirrored: the report uses their KitchenMaker sizes, not their scaled ones. Undo the scale and set the sizes in Properties.":
+    "{n} d'entre eux sont mis à l'échelle ou en miroir : le rapport reprend leurs dimensions KitchenMaker, pas " +
+    "les dimensions mises à l'échelle. Annulez l'échelle et réglez les dimensions dans Propriétés.",
   "Parts": "Pièces",
   "Totals by material": "Totaux par matière",
   "Totals": "Totaux",

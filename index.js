@@ -622,8 +622,10 @@ export function activate(context) {
       width: 900,
       height: 580,
       draw(ui) {
-        ui.text(t("Finished sizes, length ≥ width ≥ thickness; identical parts grouped. Edge banding, grain and " +
-          "nesting aren't covered. Double-click a row to show its cabinets."), { tone: "muted" });
+        ui.text(t("Finished sizes, length ≥ width ≥ thickness, but cutouts as width, depth, thickness; identical " +
+          "parts grouped. Edge banding, grain and nesting aren't covered. Double-click a row to show its cabinets."),
+        { tone: "muted" });
+        warnScaled(ui, [...all.cabinetPlaces, ...all.worktopPlaces]);
         ui.table(t("Parts"), [t("Ref."), t("Designation"), t("Material"), { title: t("Length"), numeric: true },
           { title: t("Width"), numeric: true }, { title: t("Thickness"), numeric: true }, { title: t("Qty"), numeric: true },
           t("Cabinets")], rows.map((row, i) => ({
