@@ -125,7 +125,7 @@ export function defaultCabinet() {
     width: mm(600), depth: mm(600), height: mm(900), thickness: mm(18), gap: mm(2), plinth: mm(100),
     shelves: 1, drawers: 3, hinge: "Left", opening: 0, handles: true, finish: "Warm white",
     worktop: true, topFinish: "Light stone", topThickness: mm(30), overhang: mm(20), backsplash: 0,
-    price: 0, currency: "EUR",
+    price: 0, currency: "USD",
   };
 }
 
