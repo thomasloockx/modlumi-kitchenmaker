@@ -253,6 +253,20 @@ const kFrench = {
   "Saves a CSV file for spreadsheets.": "Enregistre un fichier CSV pour tableur.",
   "Allow file dialogs for KitchenMaker in Extensions > Manage Extensions to export.":
     "Autorisez les dialogues de fichiers pour KitchenMaker dans Extensions > Manage Extensions pour exporter.",
+  "Convert SketchUp Cabinets": "Convertir les armoires SketchUp",
+  "Makes the cabinets and worktops of KitchenMaker for SketchUp editable here.":
+    "Rend modifiables ici les armoires et plans de travail de KitchenMaker pour SketchUp.",
+  "Needs a newer Modlumi, which keeps what SketchUp extensions store in .skp files.":
+    "Nécessite une version plus récente de Modlumi, qui conserve ce que les extensions SketchUp enregistrent dans les fichiers .skp.",
+  "This model holds no cabinets or worktops of KitchenMaker for SketchUp.":
+    "Ce modèle ne contient aucune armoire ni aucun plan de travail de KitchenMaker pour SketchUp.",
+  "Converted {count} cabinets and worktops.": "{count} armoires et plans de travail convertis.",
+  "Converted {count} of {total} cabinets and worktops; the others have settings KitchenMaker can't build and stay as they are.":
+    "{count} armoires et plans de travail convertis sur {total} ; les autres ont des réglages que KitchenMaker ne peut pas construire et restent tels quels.",
+  "This model holds cabinets or worktops made by KitchenMaker for SketchUp ({count}). Convert them so you can edit them here?":
+    "Ce modèle contient des armoires ou plans de travail faits avec KitchenMaker pour SketchUp ({count}). Les convertir pour pouvoir les modifier ici ?",
+  "Convert": "Convertir",
+  "Not Now": "Plus tard",
 };
 
 /**

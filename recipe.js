@@ -406,6 +406,93 @@ export function swapHinge(c) {
   return swapped;
 }
 
+// ------------------------------------------------------------------ KitchenMaker for SketchUp
+
+/** The attribute dictionary KitchenMaker V.1 and V.2 for SketchUp keep a cabinet's parameters in. */
+export const SKETCHUP_CABINET = "ingetrazo_kitchen_maker";
+/** The attribute dictionary KitchenMaker V.2 for SketchUp keeps a continuous worktop's parameters in. */
+export const SKETCHUP_WORKTOP = "ingetrazo_kitchenmaker_v2_worktop";
+
+/**
+ * Reads the "parameters" JSON text KitchenMaker for SketchUp stores: lengths in millimeters,
+ * angles in degrees and snake_case keys. Settings missing from it keep their fallback.
+ * @param {unknown} json
+ */
+function readSketchUp(json) {
+  let value = null;
+  try {
+    value = typeof json === "string" ? JSON.parse(json) : null;
+  } catch {
+    return null;
+  }
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
+  const p = /** @type {Record<string, unknown>} */ (value);
+  /** A setting that is wrong becomes NaN or "", which validation refuses. */
+  const number = (/** @type {string} */ key, /** @type {number} */ fallback) =>
+    p[key] === undefined ? fallback : typeof p[key] === "number" ? p[key] : NaN;
+  return {
+    /** @param {string} key @param {string} fallback */
+    text: (key, fallback) => (p[key] === undefined ? fallback : typeof p[key] === "string" ? p[key] : ""),
+    number,
+    /** @param {string} key @param {number} fallback Meters. */
+    length: (key, fallback) => (p[key] === undefined ? fallback : mm(number(key, NaN))),
+    /** @param {string} key @param {boolean} fallback */
+    flag: (key, fallback) => (typeof p[key] === "boolean" ? p[key] : fallback),
+    /** @param {string} key */
+    list: (key) => (Array.isArray(p[key]) ? p[key] : []),
+  };
+}
+
+/**
+ * The cabinet KitchenMaker for SketchUp stored as "parameters", or null when this port can't
+ * build it. Settings that KitchenMaker V.1 didn't store take their defaults.
+ * @param {unknown} json @returns {Cabinet | null}
+ */
+export function cabinetFromSketchUp(json) {
+  const p = readSketchUp(json);
+  if (p === null) return null;
+  const d = defaultCabinet();
+  /** @type {Cabinet} */
+  const cabinet = {
+    version: 1, name: p.text("name", d.name), family: /** @type {Family} */ (p.text("family", d.family)),
+    style: /** @type {Style} */ (p.text("style", d.style)), width: p.length("width", d.width),
+    depth: p.length("depth", d.depth), height: p.length("height", d.height),
+    thickness: p.length("thickness", d.thickness), gap: p.length("gap", d.gap), plinth: p.length("plinth", d.plinth),
+    shelves: p.number("shelves", d.shelves), drawers: p.number("drawers", d.drawers),
+    hinge: /** @type {"Left" | "Right"} */ (p.text("hinge", d.hinge)),
+    opening: (p.number("opening", 0) * Math.PI) / 180, handles: p.flag("handles", d.handles),
+    finish: p.text("finish", d.finish), worktop: p.flag("worktop", d.worktop),
+    topFinish: p.text("top_finish", d.topFinish), topThickness: p.length("top_thickness", d.topThickness),
+    overhang: p.length("overhang", d.overhang), backsplash: p.length("backsplash", d.backsplash),
+    price: p.number("price", d.price), currency: p.text("currency", d.currency),
+  };
+  return check(cabinet) === null ? cabinet : null;
+}
+
+/**
+ * The continuous worktop KitchenMaker for SketchUp stored as "parameters", or null when this
+ * port can't build it.
+ * @param {unknown} json @returns {Worktop | null}
+ */
+export function worktopFromSketchUp(json) {
+  const p = readSketchUp(json);
+  if (p === null) return null;
+  /** @type {Worktop} */
+  const top = {
+    version: 1, length: p.length("length", NaN), depth: p.length("depth", NaN), overhang: p.length("overhang", NaN),
+    thickness: p.length("thickness", NaN), backsplash: p.length("backsplash", 0),
+    backThickness: p.length("back_thickness", NaN), topFinish: p.text("top_finish", ""),
+    cutouts: p.list("cutouts").map((/** @type {unknown} */ value) => {
+      const c = readSketchUp(JSON.stringify(value));
+      return {
+        kind: /** @type {CutoutKind} */ (c?.text("kind", "") ?? ""), x: c?.length("x", NaN) ?? NaN,
+        y: c?.length("y", NaN) ?? NaN, width: c?.length("width", NaN) ?? NaN, depth: c?.length("depth", NaN) ?? NaN,
+      };
+    }),
+  };
+  return checkWorktop(top) === null ? top : null;
+}
+
 // ---------------------------------------------------------------------- continuous worktop
 
 /** Throws KitchenError for a worktop KitchenMaker can't build. @param {Worktop} top */

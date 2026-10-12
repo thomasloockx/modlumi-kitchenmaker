@@ -40,6 +40,8 @@ KitchenMaker needs a Modlumi version with the plugin features `viewport`, `files
   Align in a Row... and Continuous Worktop....
 - **Continuous Worktop...** puts one worktop over a row of base cabinets, with up to six sink or hob
   cutouts, each centred on a supporting cabinet.
+- **Convert SketchUp Cabinets** makes the cabinets and worktops of KitchenMaker for SketchUp in an
+  opened .skp file editable; KitchenMaker also offers it when such a file opens.
 - **Cut List** and **Cost Report** open in windows. Double-click a row to select its cabinets and
   show them; **Export CSV...** saves them for a spreadsheet (lengths in millimetres).
 
@@ -48,8 +50,11 @@ KitchenMaker needs a Modlumi version with the plugin features `viewport`, `files
 - Lengths follow the Modlumi model's units; CSV files stay in millimetres.
 - Doors and drawers are groups that swing or slide; every part is a solid.
 - The sink and hob are real holes cut into the worktop with a boolean.
-- Cabinets made by the SketchUp version aren't recognised: Modlumi doesn't import attribute
-  dictionaries from .skp files (Modlumi issue #132).
+- Cabinets and worktops made by the SketchUp version (V.1 or V.2) are converted when a .skp file
+  opens, after asking, or with **Convert SketchUp Cabinets**. Each becomes a KitchenMaker group with
+  the same settings in the same place; one whose settings KitchenMaker can't build stays as it was.
+  This needs a Modlumi version with the plugin feature `skpAttributes`; older versions keep
+  the command greyed out.
 - Cabinets nested in groups or components appear in the reports, but double-click can only select
   them while their group is open.
 - A cabinet resized with the Scale tool is refused by Align in a Row, Continuous Worktop and Add to
@@ -58,6 +63,12 @@ KitchenMaker needs a Modlumi version with the plugin features `viewport`, `files
 - Materials are recognised by their extension data, like the original's "IKM" names: a user
   material with the same name stays separate, and switching language doesn't create new ones.
   Their names, prefixed "KitchenMaker", use the language in effect when they were created.
+
+## Changes in 2.3.0 (since 2.2.0)
+
+- Cabinets and continuous worktops made by KitchenMaker V.1 or V.2 for SketchUp, read from the
+  `ingetrazo_kitchen_maker` and `ingetrazo_kitchenmaker_v2_worktop` attribute dictionaries, are
+  converted into editable KitchenMaker groups (needs Modlumi's `skpAttributes` feature).
 
 ## Changes in 2.2.0 (since 2.1.0)
 

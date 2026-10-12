@@ -739,6 +739,45 @@ export function activate(context) {
     });
   }
 
+  // --------------------------------------------------------------- KitchenMaker for SketchUp
+
+  // Modlumi versions that keep a .skp file's attribute dictionaries let the plugin take over the
+  // cabinets KitchenMaker for SketchUp made.
+  const readsSketchUp = context.features.includes("skpAttributes");
+  /** @param {modlumi.ComponentInstance} instance */
+  const sketchUpAttributes = (instance) => context.skpAttributes(instance);
+
+  /** Converts the model's SketchUp cabinets and worktops and says how it went. */
+  function convertSketchUp() {
+    const found = build.findSketchUp(sketchUpAttributes);
+    if (found.length === 0) {
+      context.alert(t("This model holds no cabinets or worktops of KitchenMaker for SketchUp."), { title: kTitle });
+      return;
+    }
+    const converted = build.convertSketchUp(found);
+    const message = converted === found.length
+      ? t("Converted {count} cabinets and worktops.", { count: converted })
+      : t("Converted {count} of {total} cabinets and worktops; the others have settings KitchenMaker can't build " +
+        "and stay as they are.", { count: converted, total: found.length });
+    context.showMessage(message);
+  }
+
+  /** Offers to convert the open model's SketchUp cabinets and worktops, when it has any. */
+  function offerSketchUpConversion() {
+    const count = build.findSketchUp(sketchUpAttributes).filter((item) => item.data !== null).length;
+    if (count === 0) return;
+    context.confirm(t("This model holds cabinets or worktops made by KitchenMaker for SketchUp ({count}). " +
+      "Convert them so you can edit them here?", { count }), {
+      title: kTitle, confirmLabel: t("Convert"), cancelLabel: t("Not Now"), onConfirm: () => attempt(convertSketchUp),
+    });
+  }
+
+  if (readsSketchUp) {
+    context.onDocumentOpened(offerSketchUpConversion);
+    // The model Modlumi started with opened before the plugin did.
+    offerSketchUpConversion();
+  }
+
   // ------------------------------------------------------------------------------ commands
 
   const oneCabinet = () => build.getSelectedCabinets().length === 1;
@@ -791,6 +830,13 @@ export function activate(context) {
   context.registerCommand({
     id: "cost-report", title: t("Cost Report"), tip: t("Prices every cabinet of the model."),
     icon: "icons/report.svg", toolbar: true, run: () => attempt(showCostReport),
+  });
+  context.registerCommand({
+    id: "convert-sketchup", title: t("Convert SketchUp Cabinets"),
+    tip: readsSketchUp
+      ? t("Makes the cabinets and worktops of KitchenMaker for SketchUp editable here.")
+      : t("Needs a newer Modlumi, which keeps what SketchUp extensions store in .skp files."),
+    isEnabled: () => readsSketchUp, run: () => attempt(convertSketchUp),
   });
   context.registerCommand({
     id: "export-cut-list", title: t("Export Cut List..."), tip: t("Saves the cut list as CSV, in millimeters."),

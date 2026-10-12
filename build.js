@@ -18,6 +18,11 @@ import { t, names } from "./i18n.js";
  *   Marks a material KitchenMaker made; key, such as "front/Warm white", stays the same in every language.
  * @typedef {{ group: modlumi.Group, cabinet: Cabinet, x: number, y: number, z: number }} RowItem
  * @typedef {{
+ *   entities: modlumi.Entities, instance: modlumi.ComponentInstance, data: Data | null,
+ * }} SketchUpObject
+ *   A cabinet or worktop KitchenMaker for SketchUp made, in the entities that hold it, with its
+ *   parameters, or null when this plugin can't build them.
+ * @typedef {{
  *   element: modlumi.Group | modlumi.ComponentInstance, world: modlumi.Transformation, selectable: boolean,
  *   scaled: boolean,
  * }} Placed
@@ -482,4 +487,58 @@ export function addWorktop(groups, oldWorktops, worktop, pose) {
     model.selection.add(group);
     return group;
   });
+}
+
+/**
+ * The cabinets and worktops KitchenMaker for SketchUp made, which a .skp file brings in as
+ * component instances, in the model and in its definitions.
+ * @param {(instance: modlumi.ComponentInstance) => modlumi.SkpAttributes | undefined} attributesOf
+ * @returns {SketchUpObject[]}
+ */
+export function findSketchUp(attributesOf) {
+  /** @type {SketchUpObject[]} */
+  const found = [];
+  for (const entities of [model.entities, ...model.definitions.map((d) => d.entities)]) {
+    for (const instance of entities.ofType("ComponentInstance")) {
+      const attributes = attributesOf(instance);
+      const cabinet = attributes?.[recipe.SKETCHUP_CABINET]?.["parameters"];
+      const worktop = attributes?.[recipe.SKETCHUP_WORKTOP]?.["parameters"];
+      if (cabinet !== undefined) {
+        const parsed = recipe.cabinetFromSketchUp(cabinet);
+        found.push({ entities, instance, data: parsed && { type: "cabinet", cabinet: parsed } });
+      } else if (worktop !== undefined) {
+        const parsed = recipe.worktopFromSketchUp(worktop);
+        found.push({ entities, instance, data: parsed && { type: "worktop", worktop: parsed } });
+      }
+    }
+  }
+  return found;
+}
+
+/**
+ * Replaces the cabinets and worktops KitchenMaker for SketchUp made with ones this plugin edits,
+ * in the same place, in one undo step. Returns how many it replaced; the others stay as they are.
+ * @param {readonly SketchUpObject[]} found
+ */
+export function convertSketchUp(found) {
+  const usable = found.filter((item) => item.data !== null && item.instance.isValid);
+  if (usable.length === 0) return 0;
+  model.operation(t("Convert SketchUp Cabinets"), () => {
+    const materials = new Materials();
+    for (const { entities, instance, data } of usable) {
+      const d = /** @type {Data} */ (data);
+      const group = entities.addGroup();
+      if (d.type === "cabinet") {
+        fillCabinet(materials, group.entities, d.cabinet);
+      } else {
+        fillWorktop(materials, group.entities, d.worktop);
+      }
+      group.name = instance.name || (d.type === "cabinet" ? d.cabinet.name : t("Continuous worktop"));
+      group.transformation = instance.transformation;
+      group.hidden = instance.hidden;
+      entityData.set(group, d);
+      entities.erase(instance);
+    }
+  });
+  return usable.length;
 }
