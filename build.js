@@ -17,9 +17,10 @@ import { t, names } from "./i18n.js";
  * @typedef {{ group: modlumi.Group, cabinet: Cabinet, x: number, y: number, z: number }} RowItem
  * @typedef {{
  *   element: modlumi.Group | modlumi.ComponentInstance, world: modlumi.Transformation, selectable: boolean,
+ *   scaled: boolean,
  * }} Placed
- *   Where a cabinet or worktop of the model is: its world transformation, and whether it is in the
- *   context being edited, where it can be selected.
+ *   Where a cabinet or worktop of the model is: its world transformation, whether it is in the
+ *   context being edited, where it can be selected, and whether it shows scaled or mirrored.
  */
 
 const { Transformation } = modlumi;
@@ -47,6 +48,44 @@ export function getWorktop(element) {
   if (!(element instanceof modlumi.Group)) return null;
   const data = /** @type {Data | undefined} */ (entityData.get(element));
   return data?.type === "worktop" ? data.worktop : null;
+}
+
+/**
+ * Whether a transformation scales, mirrors or skews what it places, which KitchenMaker's sizes
+ * don't account for.
+ * @param {modlumi.Transformation} transformation
+ */
+export function isScaled(transformation) {
+  const { xAxis: x, yAxis: y, zAxis: z } = transformation;
+  const unit = [x, y, z].every((axis) => Math.abs(axis.length - 1) < 1e-6);
+  const square = Math.abs(x.dot(y)) < 1e-6 && Math.abs(y.dot(z)) < 1e-6 && Math.abs(z.dot(x)) < 1e-6;
+  return !unit || !square || x.cross(y).dot(z) < 0;
+}
+
+/** Throws when a cabinet is scaled, as rows and placement beside it need its real size. @param {modlumi.Group} group */
+function requireUnscaled(group) {
+  if (isScaled(group.transformation)) {
+    throw new recipe.KitchenError(t("“{name}” is scaled. Undo the scale and set its size in Properties instead.",
+      { name: group.name || getCabinet(group)?.name || "" }));
+  }
+}
+
+/** The ids of what the context being edited holds. */
+const getActiveIds = () => new Set(model.activeEntities.toArray().map((e) => e.entityId));
+
+/**
+ * The cabinets, checked to still be cabinets in the context being edited. Throws when one was
+ * deleted or the user opened another group since they were picked.
+ * @param {readonly modlumi.Group[]} groups
+ */
+export function getLiveCabinets(groups) {
+  const active = getActiveIds();
+  const live = groups.filter((g) => g.isValid && active.has(g.entityId) && getCabinet(g) !== null);
+  if (live.length !== groups.length) {
+    throw new recipe.KitchenError(t("Some of these cabinets were deleted or aren't in the group being edited. " +
+      "Select them again."));
+  }
+  return live;
 }
 
 /** The selected cabinets. */
@@ -78,7 +117,7 @@ export function getAllInModel() {
     for (const element of entities) {
       if (!(element instanceof modlumi.Group || element instanceof modlumi.ComponentInstance)) continue;
       const world = parent.multiply(element.transformation);
-      const place = { element, world, selectable: inActive && active.has(element.entityId) };
+      const place = { element, world, selectable: inActive && active.has(element.entityId), scaled: isScaled(world) };
       const data = /** @type {Data | undefined} */ (entityData.get(element));
       if (data?.type === "cabinet") {
         cabinets.push(data.cabinet);
@@ -242,7 +281,8 @@ export function getPose(point, rotation) {
  * beside a base cabinet, or the other way round, goes at height z instead of the other's.
  * @param {modlumi.Group} reference @param {Cabinet} cabinet @param {number} gap @param {"left" | "right"} side
  */
-export function getPoseBeside(reference, cabinet, gap, side) {
+export function getPoseBeside(reference, cabinet, gap, side, z) {
+  requireUnscaled(reference);
   const other = /** @type {Cabinet} */ (getCabinet(reference));
   const dx = side === "left" ? -(cabinet.width + gap) : other.width + gap;
   const pose = reference.transformation.multiply(Transformation.translation([dx, 0, 0]));
@@ -275,6 +315,7 @@ export function getRow(groups) {
   const axes = anchor.transformation;
   const toRow = axes.inverse();
   const items = groups.map((group) => {
+    requireUnscaled(group);
     const tr = group.transformation;
     if (tr.xAxis.normalize().dot(axes.xAxis.normalize()) < 0.9999 ||
       tr.zAxis.normalize().dot(axes.zAxis.normalize()) < 0.9999) {

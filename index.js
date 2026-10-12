@@ -619,6 +619,18 @@ export function activate(context) {
     });
   }
 
+  /**
+   * Warns that scaled cabinets and worktops show in the reports by their parameters, which is not
+   * the size they show in the model.
+   * @param {modlumi.Ui} ui @param {readonly Placed[]} places
+   */
+  function warnScaled(ui, places) {
+    const scaled = places.filter((p) => p.scaled).length;
+    if (scaled === 0) return;
+    ui.text(t("{n} of these are scaled or mirrored: the report uses their KitchenMaker sizes, not their scaled " +
+      "ones. Undo the scale and set the sizes in Properties.", { n: scaled }), { tone: "warning" });
+  }
+
   /** Shows the cut list of the whole model. */
   function showCutList() {
     let { all, rows } = getCutList();
@@ -669,6 +681,7 @@ export function activate(context) {
       draw(ui) {
         ui.text(t("Every cabinet of the model, nested groups included. An estimate: taxes, labor, waste and " +
           "installation aren't included. Double-click a row to show its cabinets."), { tone: "muted" });
+        warnScaled(ui, all.cabinetPlaces);
         ui.table(t("Cabinets"), [t("Name"), t("Family"), t("Front"), { title: t("Width"), numeric: true },
           { title: t("Depth"), numeric: true }, { title: t("Height"), numeric: true }, t("Finish"), t("Worktop"),
           { title: t("Qty"), numeric: true }, t("Currency"), { title: t("Unit price"), numeric: true },

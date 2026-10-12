@@ -95,8 +95,14 @@ const kFrench = {
   "Sink cutout": "Découpe évier",
   "Hob cutout": "Découpe plaque",
   "Continuous worktop (x = {x}, y = {y})": "Plan continu (x = {x}, y = {y})",
-  "Front {finish}": "Façade {finish}",
-  "Worktop {finish}": "Plan {finish}",
+  "KitchenMaker front {finish}": "KitchenMaker façade {finish}",
+  "KitchenMaker worktop {finish}": "KitchenMaker plan {finish}",
+  "KitchenMaker {part}": "KitchenMaker {part}",
+  "“{name}” is scaled. Undo the scale and set its size in Properties instead.":
+    "« {name} » est mis à l'échelle. Annulez l'échelle et réglez plutôt ses dimensions dans Propriétés.",
+  "Some of these cabinets were deleted or aren't in the group being edited. Select them again.":
+    "Certaines de ces armoires ont été supprimées ou ne sont pas dans le groupe en cours d'édition. " +
+    "Sélectionnez-les à nouveau.",
   "The cabinets must face the same way to make a row.":
     "Les armoires doivent avoir la même orientation pour former une rangée.",
   "Select at least two cabinets.": "Sélectionnez au moins deux armoires.",
