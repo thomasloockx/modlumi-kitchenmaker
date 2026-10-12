@@ -2,89 +2,82 @@
 
 ![KitchenMaker in Modlumi: placing cabinets, finishes, a worktop with a sink and hob, and the cost report](media/kitchenmaker-teaser.gif)
 
-Parametric kitchen cabinets for [Modlumi](https://modlumi.com), ported from **IngeTrazo KitchenMaker V.2**
-for SketchUp 2017: a cabinet library, rows, opening doors, finishes, a continuous worktop with sink
-and hob cutouts, a cut list and a cost report with CSV export. The interface follows the user's
-language (English or French). Licensed GPL-3.0-or-later, like the original.
+Parametric kitchen cabinets for [Modlumi](https://modlumi.com), ported from **IngeTrazo
+KitchenMaker V.2** for SketchUp 2017: a cabinet library, rows, opening doors, finishes, a
+continuous worktop with sink and hob cutouts, a cut list and a cost report with CSV export.
+Licensed GPL-3.0-or-later, like the original.
 
-**Status:** experimental. It needs a Modlumi build with the plugin API features listed in
-`plugin.json` (`requires`). Install it from **Extensions › Manage Extensions... › Install plugin...**
-by choosing this folder's `plugin.json`, then allow file dialogs to export CSV.
+**Status:** experimental.
 
-`modlumi.d.ts` is a copy of Modlumi's plugin API types, for type-checking with
-`tsc -p jsconfig.json`.
-
----
-
-# KitchenMaker pour Modlumi
-
-Armoires de cuisine paramétriques pour Modlumi, d'après **IngeTrazo KitchenMaker V.2** pour
-SketchUp 2017. Licence GPL-3.0-or-later, comme l'original.
-
-L'interface suit la langue de l'utilisateur : français ou anglais, comme l'original ; les autres
-langues retombent sur l'anglais. Les nombres des rapports et des CSV suivent les réglages
-régionaux (séparateur décimal, séparateur de colonnes du tableur). Les valeurs enregistrées dans
-le modèle restent en anglais, si bien qu'un modèle s'ouvre dans n'importe quelle langue.
+The interface follows the user's language: English or French, the two languages the original
+ships; other languages fall back to English. Numbers in reports and CSV files follow the user's
+regional settings (decimal separator, spreadsheet column separator). Values stored in the model
+stay in English, so a model opens in any language.
 
 ## Installation
 
-Modlumi Desktop : **Extensions › Manage Extensions... › Install plugin...**, puis choisissez le
-fichier `plugin.json` de ce dossier. Autorisez les « dialogues de fichiers » pour exporter les
-CSV ; sans cette permission, les boutons d'export restent grisés et disent pourquoi.
+In Modlumi Desktop, choose **Extensions › Manage Extensions... › Install plugin...** and pick this
+folder's `plugin.json`. Allow file dialogs to export CSV files; without that permission the export
+buttons stay greyed out and say why.
 
-Requiert une version de Modlumi qui offre les fonctions `viewport`, `files`, `toolSelection`,
-`propertiesWhen`, `previewBoxes`, `formValidation`, `listWidget`, `locale` et `numberFormat` ; une version plus ancienne refuse l'extension en le disant.
+KitchenMaker needs a Modlumi version with the plugin features `viewport`, `files`,
+`toolSelection`, `propertiesWhen`, `previewBoxes`, `formValidation`, `listWidget`, `locale`,
+`numberFormat` and `tableActivation`; an older version refuses the plugin and says so.
 
-## Utilisation
+## Usage
 
-- **Extensions › KitchenMaker › Bibliothèque** ouvre le panneau : catégorie, modèle, puis tous les
-  réglages de l'armoire. Une valeur refusée s'affiche en rouge sous son champ.
-- **Placer à la souris** (dans le panneau) ou **Placer une armoire** choisit l'outil de pose : un
-  clic pose l'armoire avec l'inférence de Modlumi puis revient à l'outil Sélection, comme Échap.
-  **X** la tourne de 90°, et taper un angle puis Entrée la tourne de cet angle ; la pose part de la
-  rotation du panneau. Le panneau peut aussi la créer à des coordonnées exactes, ou à gauche ou à
-  droite de l'armoire sélectionnée (à la hauteur Z du panneau pour un meuble haut à côté d'un
-  meuble bas, et inversement).
-- Sélectionnez une armoire ou un plan de travail : ses réglages apparaissent dans **Propriétés**,
-  et chaque changement le reconstruit (une seule étape d'annulation). Les découpes d'un plan s'y
-  ajoutent, s'y retirent et s'y déplacent.
-- Clic droit sur des armoires : Ajouter à droite / à gauche, Ouvrir / fermer, Inverser la
-  charnière, Finitions…, Aligner en rangée…, Plan de travail continu….
-- **Plan de travail continu…** pose un seul plan sur une rangée de meubles bas, avec autant de
-  découpes d'évier ou de plaque que voulu (six au plus), chacune centrée sur un meuble support.
-- **Liste de débit** et **Rapport de coûts** s'affichent dans des fenêtres. Double-cliquez une
-  ligne pour sélectionner ses armoires et les montrer ; **Exporter en CSV…** les enregistre pour
-  un tableur (longueurs en millimètres).
+- **Extensions › KitchenMaker › Library** opens the panel: category, model, then every setting of
+  the cabinet. A refused value shows in red under its field.
+- **Place with the Mouse** (in the panel) or **Place Cabinet** selects the placement tool: a click
+  places the cabinet using Modlumi's inference and returns to the Select tool, as Esc does.
+  **X** turns the cabinet 90°, and typing an angle then Enter turns it by that angle; placement
+  starts from the panel's rotation. The panel can also create the cabinet at exact coordinates, or
+  to the left or right of the selected cabinet (at the panel's Z height for a wall cabinet next to
+  a base cabinet, and the other way round).
+- Select a cabinet or a worktop and its settings appear in **Properties**; each change rebuilds it
+  as one undo step. A worktop's cutouts can be added, removed and moved there.
+- Right-click cabinets for Add to the Right / Left, Open / Close, Swap Hinge, Finishes...,
+  Align in a Row... and Continuous Worktop....
+- **Continuous Worktop...** puts one worktop over a row of base cabinets, with up to six sink or hob
+  cutouts, each centred on a supporting cabinet.
+- **Cut List** and **Cost Report** open in windows. Double-click a row to select its cabinets and
+  show them; **Export CSV...** saves them for a spreadsheet (lengths in millimetres).
 
-## Différences avec la version SketchUp
+## Differences from the SketchUp version
 
-- Les longueurs suivent les unités du modèle Modlumi ; les CSV restent en millimètres.
-- Les portes et tiroirs sont des groupes qui pivotent ou coulissent ; chaque pièce est un solide.
-- L'évier et la plaque sont de vrais trous percés par booléen dans le plan de travail.
-- Les armoires créées par la version SketchUp ne sont pas reconnues : Modlumi n'importe pas les
-  dictionnaires d'attributs des fichiers .skp (ticket #132).
-- Les armoires dans des groupes ou composants imbriqués figurent dans les rapports, mais le
-  double-clic ne peut les sélectionner que si leur groupe est ouvert.
-- Une armoire mise à l'échelle (outil Échelle) est refusée par Aligner en rangée, Plan de travail
-  continu et l'ajout à côté ; les rapports la signalent, car ils reprennent ses dimensions
-  KitchenMaker. Réglez plutôt ses dimensions dans Propriétés.
-- Les matériaux sont reconnus par leurs données d'extension, comme les noms « IKM » de l'original :
-  un matériau de l'utilisateur du même nom reste à part, et changer de langue n'en crée pas
-  d'autres. Leur nom, préfixé « KitchenMaker », suit la langue du moment où ils sont créés.
+- Lengths follow the Modlumi model's units; CSV files stay in millimetres.
+- Doors and drawers are groups that swing or slide; every part is a solid.
+- The sink and hob are real holes cut into the worktop with a boolean.
+- Cabinets made by the SketchUp version aren't recognised: Modlumi doesn't import attribute
+  dictionaries from .skp files (Modlumi issue #132).
+- Cabinets nested in groups or components appear in the reports, but double-click can only select
+  them while their group is open.
+- A cabinet resized with the Scale tool is refused by Align in a Row, Continuous Worktop and Add to
+  the Left/Right, and the reports flag it, because they use its KitchenMaker dimensions. Set its
+  dimensions in Properties instead.
+- Materials are recognised by their extension data, like the original's "IKM" names: a user
+  material with the same name stays separate, and switching language doesn't create new ones.
+  Their names, prefixed "KitchenMaker", use the language in effect when they were created.
 
-## CHANGES (2.2.0, par rapport à la 2.1.0)
+## Changes in 2.2.0 (since 2.1.0)
 
-- Interface en anglais et en français selon `context.locale` (la 2.1.0 était en français seul) ;
-  noms des matériaux et des pièces dans la langue de l'utilisateur.
-- Aperçu de l'outil de pose avec `view.box` au lieu de douze segments tracés à la main par boîte.
-- **X** tourne l'armoire de 90° pendant la pose, et un angle tapé la règle (la 2.1.0 n'avait que
-  le champ Rotation de la carte d'outil). Le panneau sélectionne l'outil par un bouton.
-- Erreurs de validation sous le champ en cause (option `error`) au lieu d'un message en bas.
-- Deux sections Propriétés, armoire et plan, filtrées par `when` au lieu d'une section commune.
-- Découpes en liste (`ui.list`) : nombre libre jusqu'à six, au lieu d'un évier et d'une plaque
-  fixes ; elles se modifient aussi depuis les Propriétés du plan.
-- Double-clic sur une ligne de la liste de débit ou du rapport de coûts (`onActivate`) :
-  sélectionne les armoires et y amène la caméra.
-- CSV avec `context.formatCsv` et montants avec `context.formatNumber`, selon les réglages
-  régionaux, au lieu de points-virgules et de virgules décimales codés en dur. Boutons d'export
-  dans les fenêtres de rapport, en plus des commandes.
+- English and French interface following `context.locale` (2.1.0 was French only); material and
+  part names in the user's language.
+- The placement tool's preview uses `view.box` instead of twelve hand-drawn segments per box.
+- **X** turns the cabinet 90° while placing, and a typed angle sets it (2.1.0 only had the
+  Rotation field in the tool options). The panel selects the tool from a button.
+- Validation errors show under the field concerned (the `error` option) instead of one message at
+  the bottom.
+- Two Properties sections, cabinet and worktop, filtered with `when` instead of one shared section.
+- Cutouts are a list (`ui.list`) of up to six instead of one fixed sink and one fixed hob; they
+  can also be edited from the worktop's Properties.
+- Double-clicking a row in the cut list or cost report (`onActivate`) selects its cabinets and
+  moves the camera to them.
+- CSV through `context.formatCsv` and amounts through `context.formatNumber`, following regional
+  settings, instead of hard-coded semicolons and decimal commas. Export buttons in the report
+  windows, in addition to the commands.
+
+## Development
+
+`modlumi.d.ts` is a copy of Modlumi's plugin API types. Type-check the plugin with
+`tsc -p jsconfig.json`.
