@@ -14,6 +14,8 @@ import { t, names } from "./i18n.js";
  * @typedef {import("./recipe.js").Part} Part
  * @typedef {import("./recipe.js").Role} Role
  * @typedef {{ type: "cabinet", cabinet: Cabinet } | { type: "worktop", worktop: Worktop }} Data
+ * @typedef {{ type: "material", key: string }} MaterialData
+ *   Marks a material KitchenMaker made; key, such as "front/Warm white", stays the same in every language.
  * @typedef {{ group: modlumi.Group, cabinet: Cabinet, x: number, y: number, z: number }} RowItem
  * @typedef {{
  *   element: modlumi.Group | modlumi.ComponentInstance, world: modlumi.Transformation, selectable: boolean,
@@ -163,28 +165,46 @@ export function getWorldBounds(places) {
 
 // ------------------------------------------------------------------------------- materials
 
+/** KitchenMaker's materials found so far, by key. @type {Map<string, modlumi.Material>} */
+const materials = new Map();
+
+/** Whether a material is KitchenMaker's of that key. @param {modlumi.Material} material @param {string} key */
+const isMaterialOf = (material, key) => {
+  if (!material.isValid) return false;
+  const data = /** @type {MaterialData | undefined} */ (entityData.get(material));
+  return data?.type === "material" && data.key === key;
+};
+
 /**
  * The model's material of that name, added with the color when there is none. The user may
  * repaint it, and every cabinet that uses it follows.
  * @param {string} name @param {{ r: number, g: number, b: number, a?: number }} color
  */
-function getMaterial(name, color) {
-  return model.getMaterial(name) ?? model.addMaterial(name, { color });
+function getMaterial(key, name, color) {
+  const known = materials.get(key);
+  if (known !== undefined && isMaterialOf(known, key)) return known;
+  let material = model.materials.find((m) => isMaterialOf(m, key));
+  if (material === undefined) {
+    material = model.addMaterial(name, { color });
+    entityData.set(material, /** @type {MaterialData} */ ({ type: "material", key }));
+  }
+  materials.set(key, material);
+  return material;
 }
 
 /** @param {Role} role @param {{ finish?: string, topFinish?: string }} finishes */
 function getPartMaterial(role, finishes) {
   if (role === "front") {
     const finish = finishes.finish ?? "Warm white";
-    return getMaterial(t("Front {finish}", { finish: names.finish(finish) }),
+    return getMaterial(`front/${finish}`, t("KitchenMaker front {finish}", { finish: names.finish(finish) }),
       recipe.FINISHES[/** @type {keyof typeof recipe.FINISHES} */ (finish)]);
   }
   if (role === "top") {
     const finish = finishes.topFinish ?? "Light stone";
-    return getMaterial(t("Worktop {finish}", { finish: names.top(finish) }),
+    return getMaterial(`top/${finish}`, t("KitchenMaker worktop {finish}", { finish: names.top(finish) }),
       recipe.TOPS[/** @type {keyof typeof recipe.TOPS} */ (finish)]);
   }
-  return getMaterial(names.role(role), recipe.ROLE_COLORS[role]);
+  return getMaterial(role, t("KitchenMaker {part}", { part: names.role(role).toLowerCase() }), recipe.ROLE_COLORS[role]);
 }
 
 // --------------------------------------------------------------------------------- cabinets
