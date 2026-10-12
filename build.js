@@ -257,7 +257,7 @@ export function rebuildCabinet(group, cabinet) {
  * @param {string} name @param {readonly modlumi.Group[]} groups @param {(cabinet: Cabinet) => Cabinet} change
  */
 export function changeCabinets(name, groups, change) {
-  const updates = groups.map((group) => {
+  const updates = getLiveCabinets(groups).map((group) => {
     const cabinet = change(/** @type {Cabinet} */ (getCabinet(group)));
     recipe.getParts(cabinet);
     return { group, cabinet };
@@ -333,7 +333,7 @@ export function getRow(groups) {
  */
 export function alignRow(groups, gap, align) {
   if (groups.length < 2) throw new recipe.KitchenError(t("Select at least two cabinets."));
-  const { axes, items } = getRow(groups);
+  const { axes, items } = getRow(getLiveCabinets(groups));
   const first = items[0];
   const back = first.y + first.cabinet.depth;
   let x = first.x;
@@ -420,7 +420,9 @@ export function planWorktop(groups, options) {
  */
 export function addWorktop(groups, oldWorktops, worktop, pose) {
   recipe.validateWorktop(worktop);
-  const updates = groups.map((group) => ({ group, cabinet: /** @type {Cabinet} */ (getCabinet(group)) }))
+  const active = getActiveIds();
+  const old = oldWorktops.filter((g) => g.isValid && active.has(g.entityId) && getWorktop(g) !== null);
+  const updates = getLiveCabinets(groups).map((group) => ({ group, cabinet: /** @type {Cabinet} */ (getCabinet(group)) }))
     .filter(({ cabinet }) => cabinet.worktop)
     .map(({ group, cabinet }) => ({ group, cabinet: { ...cabinet, worktop: false } }));
   return model.operation(t("Continuous Worktop"), () => {

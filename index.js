@@ -435,11 +435,12 @@ export function activate(context) {
     context.showDialog({
       id: "finishes",
       title: t("Finishes"),
+      modal: true,
       draw(ui) {
         ui.text(t("{n} cabinet(s) selected", { n: groups.length }), { tone: "muted" });
         finish = choose(ui, t("Front finish"), finish, Object.keys(recipe.FINISHES), names.finish);
         if (ui.button(t("Apply"), { primary: true })) {
-          attempt(() => build.changeCabinets(t("Finishes"), groups.filter((g) => g.isValid), (c) => ({ ...c, finish })));
+          attempt(() => build.changeCabinets(t("Finishes"), groups, (c) => ({ ...c, finish })));
           ui.close();
         }
       },
@@ -453,6 +454,7 @@ export function activate(context) {
     context.showDialog({
       id: "align",
       title: t("Align in a Row"),
+      modal: true,
       draw(ui) {
         const tooBig = state.gap > mm(50) ? t("{what}: {range}.", {
           what: t("Gap"), range: t("{lo} to {hi}", { lo: model.formatLength(0), hi: model.formatLength(mm(50)) }),
@@ -461,7 +463,7 @@ export function activate(context) {
         state.align = choose(ui, t("Align"), state.align, /** @type {("back" | "front")[]} */ (["back", "front"]),
           names.align);
         if (ui.button(t("Align"), { primary: true, disabled: tooBig !== null })) {
-          attempt(() => build.alignRow(groups.filter((g) => g.isValid), state.gap, state.align));
+          attempt(() => build.alignRow(groups, state.gap, state.align));
           ui.close();
         }
       },
@@ -470,7 +472,8 @@ export function activate(context) {
 
   /**
    * Asks for a continuous worktop over the selected cabinets, with its cutouts, each centered on a
-   * cabinet of the row and shifted by an offset.
+   * cabinet of the row and shifted by an offset. The dialog is modal, so the row and the group
+   * being edited stay as they were; the row is still checked and measured again on Create.
    */
   function showWorktop() {
     const groups = build.getSelectedCabinets();
@@ -486,41 +489,64 @@ export function activate(context) {
       overhang: previous?.overhang ?? source.overhang,
       backsplash: previous?.backsplash ?? Math.max(...cabinets.map((c) => c.backsplash)),
     };
-    const x0 = plan.items[0].x;
     /** @typedef {{ kind: CutoutKind, support: number, width: number, depth: number, offset: number, front: number }} Placement */
-    /** Where a cutout centered on a support cabinet, shifted by offset, starts along the worktop. @param {Placement} cut */
-    const startOf = (cut) => {
-      const item = plan.items[cut.support];
-      return item.x + item.cabinet.width / 2 + cut.offset - cut.width / 2 - x0;
+    /**
+     * A cutout centered on its support cabinet of a row, shifted by its offset.
+     * @param {Placement} cut @param {readonly import("./build.js").RowItem[]} items @returns {Cutout}
+     */
+    const toCutout = (cut, items) => {
+      const item = items[cut.support];
+      const x = item.x + item.cabinet.width / 2 + cut.offset - cut.width / 2 - items[0].x;
+      return { kind: cut.kind, x, y: cut.front, width: cut.width, depth: cut.depth };
     };
     /** @type {Placement[]} */
     let cuts = (previous?.cutouts ?? []).map((had) => {
-      const center = x0 + had.x + had.width / 2;
+      const center = plan.items[0].x + had.x + had.width / 2;
       const support = Math.max(0, plan.items.findIndex((i) => center >= i.x && center <= i.x + i.cabinet.width));
       const item = plan.items[support];
       return { kind: had.kind, support, width: had.width, depth: had.depth, front: had.y,
         offset: center - (item.x + item.cabinet.width / 2) };
     });
-    /** The worktop with the dialog's options and cutouts. */
-    const getWorktop = () => {
-      const fresh = build.planWorktop(groups.filter((g) => g.isValid), options);
-      fresh.worktop.cutouts = cuts.map((cut) => ({
-        kind: cut.kind, x: startOf(cut), y: cut.front, width: cut.width, depth: cut.depth,
-      }));
-      return fresh;
+    /**
+     * A new cutout, centered on the widest cabinet where it fits beside the others, or on the
+     * widest cabinet when it fits nowhere.
+     * @param {Worktop} top @returns {Placement}
+     */
+    const newPlacement = (top) => {
+      /** @type {CutoutKind} */
+      const kind = cuts.some((c) => c.kind === "sink") ? "hob" : "sink";
+      const [width, depth] = recipe.CUTOUT_SIZES[kind];
+      const placed = cuts.map((cut) => toCutout(cut, plan.items));
+      const widest = plan.items.map((_, i) => i)
+        .sort((a, b) => plan.items[b].cabinet.width - plan.items[a].cabinet.width || a - b);
+      const at = (/** @type {number} */ support) => ({ kind, support, width, depth, offset: 0, front: mm(70) });
+      const fits = (/** @type {number} */ support) => {
+        const cut = toCutout(at(support), plan.items);
+        return recipe.checkCutout(top, cut) === null && !placed.some((other) => recipe.overlap(cut, other));
+      };
+      return at(widest.find(fits) ?? widest[0]);
+    };
+    /** Plans the worktop again from the model and lays it, or says why it can't. */
+    const create = () => {
+      const live = build.getLiveCabinets(groups);
+      const fresh = build.planWorktop(live, options);
+      fresh.worktop.cutouts = cuts.map((cut) => toCutout(cut, fresh.items));
+      build.addWorktop(live, old, fresh.worktop, fresh.pose);
     };
     let error = "";
     context.showDialog({
       id: "worktop",
       title: t("Continuous Worktop"),
+      modal: true,
+      // A fixed size, which scrolls, so a few cutouts don't make it taller than the window.
+      width: 560,
+      height: 640,
       draw(ui) {
         options.topFinish = choose(ui, t("Finish"), options.topFinish, Object.keys(recipe.TOPS), names.top);
-        options.thickness = ui.length(t("Thickness"), options.thickness, { min: 0 });
-        options.overhang = ui.length(t("Front overhang"), options.overhang, { min: 0 });
-        options.backsplash = ui.length(t("Backsplash"), options.backsplash, { min: 0 });
-        const top = { ...plan.worktop, ...options, thickness: options.thickness };
-        const placed = cuts.map((cut) => ({ kind: cut.kind, x: startOf(cut), y: cut.front, width: cut.width,
-          depth: cut.depth }));
+        options.thickness = ui.length(t("Thickness"), options.thickness, { min: 0, ...e("thickness") });
+        options.overhang = ui.length(t("Front overhang"), options.overhang, { min: 0, ...e("overhang") });
+        options.backsplash = ui.length(t("Backsplash"), options.backsplash, { min: 0, ...e("backsplash") });
+        const placed = cuts.map((cut) => toCutout(cut, plan.items));
         cuts = ui.list(t("Cutouts"), cuts, (cut, index) => {
           const own = recipe.checkCutout(top, placed[index]);
           const near = placed.some((other, i) => i !== index && recipe.overlap(placed[index], other));
@@ -533,19 +559,14 @@ export function activate(context) {
             front: ui.length(t("From the front edge"), cut.front, { min: 0 }),
           };
         }, {
-          add: () => {
-            const kind = cuts.some((c) => c.kind === "sink") ? "hob" : "sink";
-            const [width, depth] = recipe.CUTOUT_SIZES[kind];
-            return { kind, support: 0, width, depth, offset: 0, front: mm(70) };
-          },
+          add: () => newPlacement(top),
           remove: true, addLabel: t("Add Cutout"), removeLabel: t("Remove"),
           error: cuts.length > recipe.kMaxCutouts ? t("At most {n} cutouts.", { n: recipe.kMaxCutouts }) : null,
         });
         if (error !== "") ui.text(error, { tone: "error" });
         if (ui.button(t("Create Worktop"), { primary: true })) {
           try {
-            const { worktop, pose } = getWorktop();
-            build.addWorktop(groups, old, worktop, pose);
+            create();
             ui.close();
           } catch (e) {
             if (!isUserError(e)) throw e;
