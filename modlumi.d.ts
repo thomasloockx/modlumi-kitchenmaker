@@ -1335,7 +1335,8 @@ declare namespace modlumi {
     snap?: boolean;
     /**
      * Describes the preview drawn over the model, in the coordinates of the context being edited.
-     * It only reads, and can't select tools.
+     * It only reads, and can't select tools, nor can the promise callbacks and `await`s it
+     * starts.
      */
     draw?(view: ToolView): void;
     /**
@@ -1825,8 +1826,9 @@ declare namespace modlumi {
      * `values` unchanged, until the user fixes it or `values` changes. `validate` receives the
      * changed values and returns messages by field key; a message for a key that isn't a field
      * shows under the form. It runs only after a change, and only reads, even in a draw that may
-     * edit: changing the model, the selection or the tool from it, or from promise callbacks it
-     * queues, throws {@link ModelError}. Needs the `"formValidation"` feature.
+     * edit: changing the model, the selection or the tool from it, or from the promise callbacks
+     * and `await`s it starts, even once code that may edit settles their promises, throws
+     * {@link ModelError}. Needs the `"formValidation"` feature.
      *
      * ```js
      * cabinet = ui.form(cabinet, schema, {
@@ -1902,8 +1904,9 @@ declare namespace modlumi {
      * Whether the section shows for `container`, for plugins whose data describes more than one
      * kind of object, such as cabinets and worktops. Without it, the section shows for every
      * container that holds the plugin's data. It only reads, even when the draw that follows may
-     * edit: changing the model, the selection or the tool from it, or from promise callbacks it
-     * queues, throws {@link ModelError}. It must return `true` to show the section. Needs the
+     * edit: changing the model, the selection or the tool from it, or from the promise callbacks
+     * and `await`s it starts, even once code that may edit settles their promises, throws
+     * {@link ModelError}. It must return `true` to show the section. Needs the
      * `"propertiesWhen"` feature.
      */
     when?(container: Group | ComponentInstance): boolean;
