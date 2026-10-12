@@ -295,7 +295,7 @@ export function activate(context) {
       }
       placing.rotation = (degrees * Math.PI) / 180;
     },
-    onCancel() {
+    onCancel(reason) {
       placing.point = null;
       if (reason === "escape") context.selectDefaultTool();
     },
@@ -397,10 +397,13 @@ export function activate(context) {
       ui.readOnly(t("Length"), model.formatLength(shown.length));
       ui.readOnly(t("Depth"), model.formatLength(shown.depth));
       const r = { ...shown };
-      r.topFinish = choose(ui, t("Finish"), shown.topFinish, Object.keys(recipe.TOPS), names.top);
-      r.thickness = ui.length(t("Thickness"), shown.thickness, { min: 0 });
-      r.overhang = ui.length(t("Front overhang"), shown.overhang, { min: 0 });
-      r.backsplash = ui.length(t("Backsplash"), shown.backsplash, { min: 0 });
+      r.topFinish = choose(ui, t("Finish"), shown.topFinish, Object.keys(recipe.TOPS), names.top, e("topFinish"));
+      r.thickness = ui.length(t("Thickness"), shown.thickness, { min: 0, ...e("thickness") });
+      r.overhang = ui.length(t("Front overhang"), shown.overhang, { min: 0, ...e("overhang") });
+      r.backsplash = ui.length(t("Backsplash"), shown.backsplash, { min: 0, ...e("backsplash") });
+      if (error !== null && !["topFinish", "thickness", "overhang", "backsplash"].includes(error.field ?? "")) {
+        ui.text(error.message, { tone: "error" });
+      }
       r.cutouts = ui.list(t("Cutouts"), shown.cutouts, (cut, index) => {
         const own = recipe.checkCutout(shown, cut);
         const near = shown.cutouts.some((other, i) => i !== index && recipe.overlap(cut, other));
@@ -542,6 +545,9 @@ export function activate(context) {
       width: 560,
       height: 640,
       draw(ui) {
+        const top = { ...plan.worktop, ...options, cutouts: [] };
+        const wrong = recipe.checkWorktop(top);
+        const e = (/** @type {Field} */ field) => ({ error: errorOf(wrong, field) });
         options.topFinish = choose(ui, t("Finish"), options.topFinish, Object.keys(recipe.TOPS), names.top);
         options.thickness = ui.length(t("Thickness"), options.thickness, { min: 0, ...e("thickness") });
         options.overhang = ui.length(t("Front overhang"), options.overhang, { min: 0, ...e("overhang") });
@@ -569,8 +575,8 @@ export function activate(context) {
             create();
             ui.close();
           } catch (e) {
-            if (!isUserError(e)) throw e;
-            error = /** @type {Error} */ (e).message;
+            // Whatever went wrong, the dialog says so and stays open.
+            error = e instanceof Error ? e.message : String(e);
           }
         }
       },
@@ -661,8 +667,8 @@ export function activate(context) {
     context.showDialog({
       id: "cut-list",
       title: t("Cut List"),
-      width: 900,
-      height: 580,
+      width: 1200,
+      height: 620,
       draw(ui) {
         ui.text(t("Finished sizes, length ≥ width ≥ thickness, but cutouts as width, depth, thickness; identical " +
           "parts grouped. Edge banding, grain and nesting aren't covered. Double-click a row to show its cabinets."),
@@ -700,8 +706,8 @@ export function activate(context) {
     context.showDialog({
       id: "cost-report",
       title: t("Cost Report"),
-      width: 900,
-      height: 500,
+      width: 1200,
+      height: 520,
       draw(ui) {
         ui.text(t("Every cabinet of the model, nested groups included. An estimate: taxes, labor, waste and " +
           "installation aren't included. Double-click a row to show its cabinets."), { tone: "muted" });

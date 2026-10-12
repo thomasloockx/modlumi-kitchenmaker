@@ -176,9 +176,11 @@ const isMaterialOf = (material, key) => {
 };
 
 /**
- * The model's material of that name, added with the color when there is none. The user may
- * repaint it, and every cabinet that uses it follows.
- * @param {string} name @param {{ r: number, g: number, b: number, a?: number }} color
+ * KitchenMaker's material of that key, added with the name and color when the model has none. It
+ * is known by its entity data, not its name, so a user material of the same name stays apart and
+ * switching languages doesn't add another. The user may rename or repaint it, and every cabinet
+ * that uses it follows.
+ * @param {string} key @param {string} name @param {{ r: number, g: number, b: number, a?: number }} color
  */
 function getMaterial(key, name, color) {
   const known = materials.get(key);
@@ -300,6 +302,7 @@ export function getPose(point, rotation) {
  * Where a cabinet goes beside another one, gap away, in the other cabinet's axes. A wall cabinet
  * beside a base cabinet, or the other way round, goes at height z instead of the other's.
  * @param {modlumi.Group} reference @param {Cabinet} cabinet @param {number} gap @param {"left" | "right"} side
+ * @param {number} z
  */
 export function getPoseBeside(reference, cabinet, gap, side, z) {
   requireUnscaled(reference);
@@ -434,7 +437,7 @@ export function planWorktop(groups, options) {
 
 /**
  * Puts one worktop over a row of base cabinets, in place of their own worktops and of the old
- * continuous worktops given. One undo step.
+ * continuous worktops given that are still in the context being edited. One undo step.
  * @param {readonly modlumi.Group[]} groups @param {readonly modlumi.Group[]} oldWorktops
  * @param {Worktop} worktop @param {modlumi.Transformation} pose
  */
@@ -446,9 +449,7 @@ export function addWorktop(groups, oldWorktops, worktop, pose) {
     .filter(({ cabinet }) => cabinet.worktop)
     .map(({ group, cabinet }) => ({ group, cabinet: { ...cabinet, worktop: false } }));
   return model.operation(t("Continuous Worktop"), () => {
-    for (const old of oldWorktops) {
-      if (old.isValid) model.activeEntities.erase(old);
-    }
+    for (const top of old) model.activeEntities.erase(top);
     for (const { group, cabinet } of updates) rebuildCabinet(group, cabinet);
     const group = model.activeEntities.addGroup();
     fillWorktop(group.entities, worktop);
