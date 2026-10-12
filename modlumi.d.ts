@@ -1446,7 +1446,8 @@ declare namespace modlumi {
     | "listWidget"
     | "locale"
     | "numberFormat"
-    | "tableActivation";
+    | "tableActivation"
+    | "skpAttributes";
 
   /** How the user's regional settings write numbers, from {@link PluginContext.numberFormat}. */
   interface NumberFormat {
@@ -1920,6 +1921,12 @@ declare namespace modlumi {
     draw(ui: Ui, container: Group | ComponentInstance): void;
   }
 
+  /** One value of an attribute dictionary from a .skp file; see {@link PluginContext.skpAttributes}. */
+  type SkpAttributeValue = string | number | boolean | null | readonly SkpAttributeValue[];
+
+  /** A .skp file's attribute dictionaries on one object, by dictionary name and key. */
+  type SkpAttributes = Readonly<Record<string, Readonly<Record<string, SkpAttributeValue>>>>;
+
   /** What {@link EntityData} can hold a value on. */
   type DataHolder = Face | Edge | Group | ComponentInstance | ComponentDefinition | Material;
 
@@ -2140,6 +2147,23 @@ declare namespace modlumi {
     readonly documentData: DocumentData;
     /** The plugin's values stored on faces, edges, groups, component instances, definitions and materials. */
     readonly entityData: EntityData;
+    /**
+     * The attribute dictionaries an imported .skp file had on `holder`, or on the model itself
+     * when `holder` is omitted, or `undefined` when it had none. This is how a plugin recognizes
+     * objects a SketchUp extension made, such as a parametric part keeping its parameters in a
+     * dictionary of its own:
+     *
+     * ```js
+     * const json = context.skpAttributes(container)?.["my_extension"]?.["parameters"];
+     * ```
+     *
+     * Imports keep them on component instances, the model's groups and components included, and
+     * on the model; they are saved with the model and copies keep them. Values keep their
+     * SketchUp types; points and vectors are `[x, y, z]`, and lengths and points stay in inches,
+     * as SketchUp stores them. Plugins can't change them; store converted values with
+     * {@link entityData}. Needs the `"skpAttributes"` feature.
+     */
+    skpAttributes(holder?: DataHolder): SkpAttributes | undefined;
     /**
      * Adds a section to Properties, shown while the selection is one group or component
      * instance holding the plugin's {@link PluginContext.entityData}. This is how a plugin lets
