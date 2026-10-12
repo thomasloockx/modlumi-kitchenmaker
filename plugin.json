@@ -1,0 +1,14 @@
+{
+  "id": "ingetrazo-kitchenmaker",
+  "name": "KitchenMaker",
+  "version": "2.2.0",
+  "description": "Parametric kitchen cabinets: library, rows, a continuous worktop with sink and hob, a cut list and a cost report. In English and French.",
+  "author": "IngeTrazo (KitchenMaker V.2 for SketchUp), adapted for Modlumi",
+  "license": "GPL-3.0-or-later",
+  "apiVersion": 1,
+  "requires": ["viewport", "files", "toolSelection", "propertiesWhen", "previewBoxes", "materialLookup",
+    "formValidation", "listWidget", "locale", "numberFormat"],
+  "permissions": {
+    "files.dialog": true
+  }
+}
