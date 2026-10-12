@@ -1,3 +1,21 @@
+# KitchenMaker for Modlumi
+
+![KitchenMaker in Modlumi: placing cabinets, finishes, a worktop with a sink and hob, and the cost report](media/kitchenmaker-teaser.gif)
+
+Parametric kitchen cabinets for [Modlumi](https://modlumi.com), ported from **IngeTrazo KitchenMaker V.2**
+for SketchUp 2017: a cabinet library, rows, opening doors, finishes, a continuous worktop with sink
+and hob cutouts, a cut list and a cost report with CSV export. The interface follows the user's
+language (English or French). Licensed GPL-3.0-or-later, like the original.
+
+**Status:** experimental. It needs a Modlumi build with the plugin API features listed in
+`plugin.json` (`requires`). Install it from **Extensions › Manage Extensions... › Install plugin...**
+by choosing this folder's `plugin.json`, then allow file dialogs to export CSV.
+
+`modlumi.d.ts` is a copy of Modlumi's plugin API types, for type-checking with
+`tsc -p jsconfig.json`.
+
+---
+
 # KitchenMaker pour Modlumi
 
 Armoires de cuisine paramétriques pour Modlumi, d'après **IngeTrazo KitchenMaker V.2** pour
