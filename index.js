@@ -209,7 +209,7 @@ export function activate(context) {
   function addBeside(side) {
     const selected = build.getSelectedCabinets();
     if (selected.length !== 1) throw new recipe.KitchenError(t("Select one KitchenMaker cabinet."));
-    const pose = build.getPoseBeside(selected[0], next, placement.gap, side);
+    const pose = build.getPoseBeside(selected[0], next, placement.gap, side, placement.z);
     model.operation(t("Add Cabinet Beside"), () => build.addCabinet(next, pose));
   }
 

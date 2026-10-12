@@ -238,13 +238,16 @@ export function getPose(point, rotation) {
 }
 
 /**
- * Where a cabinet goes beside another one, gap away, in the other cabinet's axes.
+ * Where a cabinet goes beside another one, gap away, in the other cabinet's axes. A wall cabinet
+ * beside a base cabinet, or the other way round, goes at height z instead of the other's.
  * @param {modlumi.Group} reference @param {Cabinet} cabinet @param {number} gap @param {"left" | "right"} side
  */
 export function getPoseBeside(reference, cabinet, gap, side) {
   const other = /** @type {Cabinet} */ (getCabinet(reference));
   const dx = side === "left" ? -(cabinet.width + gap) : other.width + gap;
-  return reference.transformation.multiply(Transformation.translation([dx, 0, 0]));
+  const pose = reference.transformation.multiply(Transformation.translation([dx, 0, 0]));
+  if (recipe.isWall(cabinet.family) === recipe.isWall(other.family)) return pose;
+  return Transformation.translation([0, 0, z - pose.origin.z]).multiply(pose);
 }
 
 /**
