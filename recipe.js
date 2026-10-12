@@ -586,8 +586,9 @@ export function getCostReport(cabinets) {
   }));
   rows.sort((a, b) => a.currency.localeCompare(b.currency) || a.cabinet.family.localeCompare(b.cabinet.family) ||
     a.cabinet.name.localeCompare(b.cabinet.name));
-  /** @type {Record<string, number>} */
-  const totals = {};
-  for (const row of rows) totals[row.currency] = (totals[row.currency] ?? 0) + row.totalCents;
+  // A Map, since currencies are whatever the user typed, "constructor" or "__proto__" included.
+  /** @type {Map<string, number>} */
+  const totals = new Map();
+  for (const row of rows) totals.set(row.currency, (totals.get(row.currency) ?? 0) + row.totalCents);
   return { rows, totals };
 }

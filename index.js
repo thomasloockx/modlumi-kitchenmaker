@@ -677,8 +677,8 @@ export function activate(context) {
           visibleRows: 12,
           onActivate: (id) => showInModel(report.rows[Number(id)].indices.map((i) => all.cabinetPlaces[i])),
         });
-        const totals = Object.keys(report.totals).sort()
-          .map((currency) => `${formatMoney(report.totals[currency])} ${currency}`);
+        const totals = [...report.totals].sort(([a], [b]) => a.localeCompare(b))
+          .map(([currency, cents]) => `${formatMoney(cents)} ${currency}`);
         ui.readOnly(t("Total"), totals.length > 0 ? totals.join(" + ") : t("no cabinets"));
         ui.row(() => {
           if (ui.button(t("Export CSV..."), exportButton())) {
