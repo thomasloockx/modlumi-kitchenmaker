@@ -270,6 +270,7 @@ export function activate(context) {
     toolbar: true,
     activate() {
       placing.point = null;
+      placing.rotation = placement.rotation;
       tool.status = t("Click to place the cabinet; X turns it by 90°, or type an angle. Esc stops.");
     },
     onMouseMove(event) {
@@ -280,6 +281,8 @@ export function activate(context) {
       if (placing.point === null) return;
       const pose = build.getPose(placing.point, placing.rotation);
       attempt(() => model.operation(t("Place Cabinet"), () => build.addCabinet(next, pose)));
+      // One cabinet per pick, like the original; the Select tool shows it in Properties.
+      context.selectDefaultTool();
     },
     onKeyDown(event) {
       if (event.key === "x" && !event.repeat) turn();
@@ -294,6 +297,7 @@ export function activate(context) {
     },
     onCancel() {
       placing.point = null;
+      if (reason === "escape") context.selectDefaultTool();
     },
     options(ui) {
       ui.readOnly(t("Cabinet"), next.name);
