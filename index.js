@@ -391,6 +391,9 @@ export function activate(context) {
       const group = /** @type {modlumi.Group} */ (container);
       const worktop = /** @type {Worktop} */ (build.getWorktop(group));
       const shown = getShown(group, worktop);
+      // Cutouts show their own errors in the list.
+      const error = recipe.checkWorktop({ ...shown, cutouts: [] });
+      const e = (/** @type {Field} */ field) => ({ error: errorOf(error, field) });
       ui.readOnly(t("Length"), model.formatLength(shown.length));
       ui.readOnly(t("Depth"), model.formatLength(shown.depth));
       const r = { ...shown };

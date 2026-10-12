@@ -412,7 +412,7 @@ export function validateWorktop(top) {
   need(top.thickness, mm(10), mm(100), t("Thickness"), "thickness");
   need(top.overhang, 0, mm(100), t("Front overhang"), "overhang");
   need(top.backsplash, 0, mm(600), t("Backsplash"), "backsplash");
-  need(top.backThickness, mm(8), mm(40), t("Backsplash thickness"), "thickness");
+  need(top.backThickness, mm(8), mm(40), t("Backsplash thickness"), "backsplash");
   if (top.cutouts.length > kMaxCutouts) {
     throw new KitchenError(t("At most {n} cutouts.", { n: kMaxCutouts }), "cutouts");
   }
@@ -428,6 +428,17 @@ export function validateWorktop(top) {
       }
     }
   });
+}
+
+/** Returns why KitchenMaker can't build the worktop, or null. @param {Worktop} top @returns {KitchenError | null} */
+export function checkWorktop(top) {
+  try {
+    validateWorktop(top);
+    return null;
+  } catch (error) {
+    if (error instanceof KitchenError) return error;
+    throw error;
+  }
 }
 
 /** Whether two cutouts are closer than the clearance. @param {Cutout} a @param {Cutout} b */
