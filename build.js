@@ -165,65 +165,83 @@ export function getWorldBounds(places) {
 
 // ------------------------------------------------------------------------------- materials
 
-/** Whether a material is KitchenMaker's of that key. @param {modlumi.Material} material @param {string} key */
-const isMaterialOf = (material, key) => {
-  const data = /** @type {MaterialData | undefined} */ (entityData.get(material));
-  return data?.type === "material" && data.key === key;
-};
-
 /**
- * KitchenMaker's material of that key, added with the name and color when the model has none. It
- * is known by its entity data, not its name, so a user material of the same name stays apart and
- * switching languages doesn't add another. The user may rename or repaint it, and every cabinet
- * that uses it follows. It is looked up in the model each time rather than kept, because the
- * plugin outlives the document and a handle from a closed one can't be used.
- * @param {string} key @param {string} name @param {{ r: number, g: number, b: number, a?: number }} color
+ * KitchenMaker's materials by key, for one operation. A material is known by its entity data, not
+ * its name, so a user material of the same name stays apart and switching languages doesn't add
+ * another. The user may rename or repaint it, and every cabinet that uses it follows. The model's
+ * materials are read once, on the first lookup, so building many parts doesn't search them for
+ * each. Make one per operation and drop it after: the plugin outlives the document and a handle
+ * from a closed one can't be used.
  */
-function getMaterial(key, name, color) {
-  let material = model.materials.find((m) => isMaterialOf(m, key));
-  if (material === undefined) {
-    material = model.addMaterial(name, { color });
-    entityData.set(material, /** @type {MaterialData} */ ({ type: "material", key }));
+class Materials {
+  /** @type {Map<string, modlumi.Material> | undefined} */
+  #byKey;
+
+  /**
+   * The material of that key, added with the name and color when the model has none.
+   * @param {string} key @param {string} name @param {{ r: number, g: number, b: number, a?: number }} color
+   */
+  get(key, name, color) {
+    if (this.#byKey === undefined) {
+      this.#byKey = new Map();
+      for (const material of model.materials) {
+        const data = /** @type {MaterialData | undefined} */ (entityData.get(material));
+        if (data?.type === "material" && !this.#byKey.has(data.key)) this.#byKey.set(data.key, material);
+      }
+    }
+    let material = this.#byKey.get(key);
+    if (material === undefined) {
+      material = model.addMaterial(name, { color });
+      entityData.set(material, /** @type {MaterialData} */ ({ type: "material", key }));
+      this.#byKey.set(key, material);
+    }
+    return material;
   }
-  return material;
 }
 
-/** @param {Role} role @param {{ finish?: string, topFinish?: string }} finishes */
-function getPartMaterial(role, finishes) {
+/**
+ * @param {Materials} materials @param {Role} role @param {{ finish?: string, topFinish?: string }} finishes
+ */
+function getPartMaterial(materials, role, finishes) {
   if (role === "front") {
     const finish = finishes.finish ?? "Warm white";
-    return getMaterial(`front/${finish}`, t("KitchenMaker front {finish}", { finish: names.finish(finish) }),
+    return materials.get(`front/${finish}`, t("KitchenMaker front {finish}", { finish: names.finish(finish) }),
       recipe.FINISHES[/** @type {keyof typeof recipe.FINISHES} */ (finish)]);
   }
   if (role === "top") {
     const finish = finishes.topFinish ?? "Light stone";
-    return getMaterial(`top/${finish}`, t("KitchenMaker worktop {finish}", { finish: names.top(finish) }),
+    return materials.get(`top/${finish}`, t("KitchenMaker worktop {finish}", { finish: names.top(finish) }),
       recipe.TOPS[/** @type {keyof typeof recipe.TOPS} */ (finish)]);
   }
-  return getMaterial(role, t("KitchenMaker {part}", { part: names.role(role).toLowerCase() }), recipe.ROLE_COLORS[role]);
+  return materials.get(role, t("KitchenMaker {part}", { part: names.role(role).toLowerCase() }),
+    recipe.ROLE_COLORS[role]);
 }
 
 // --------------------------------------------------------------------------------- cabinets
 
 /**
  * Adds a part as a solid box group.
- * @param {modlumi.Entities} entities @param {Part} part @param {{ finish?: string, topFinish?: string }} finishes
+ * @param {Materials} materials @param {modlumi.Entities} entities @param {Part} part
+ * @param {{ finish?: string, topFinish?: string }} finishes
  */
-function addPart(entities, part, finishes) {
+function addPart(materials, entities, part, finishes) {
   const group = entities.addBox(part.at, ...part.size);
   group.name = part.name;
-  group.material = getPartMaterial(part.role, finishes);
+  group.material = getPartMaterial(materials, part.role, finishes);
   return group;
 }
 
-/** Fills an empty cabinet group's entities. @param {modlumi.Entities} entities @param {Cabinet} cabinet */
-function fillCabinet(entities, cabinet) {
+/**
+ * Fills an empty cabinet group's entities.
+ * @param {Materials} materials @param {modlumi.Entities} entities @param {Cabinet} cabinet
+ */
+function fillCabinet(materials, entities, cabinet) {
   const { parts, fronts } = recipe.getParts(cabinet);
-  for (const part of parts) addPart(entities, part, cabinet);
+  for (const part of parts) addPart(materials, entities, part, cabinet);
   for (const front of fronts) {
     const group = entities.addGroup();
     group.name = front.name;
-    for (const part of front.parts) addPart(group.entities, part, cabinet);
+    for (const part of front.parts) addPart(materials, group.entities, part, cabinet);
     const motion = recipe.getFrontMotion(cabinet, front);
     if (motion !== 0) {
       group.transform(front.kind === "drawer"
@@ -245,11 +263,12 @@ function clear(group) {
  * Adds a cabinet to the context being edited, placed by transformation, and selects it. Call it
  * inside an operation.
  * @param {Cabinet} cabinet @param {modlumi.Transformation} transformation
+ * @param {Materials} [materials] The operation's materials, when it builds more than this cabinet.
  */
-export function addCabinet(cabinet, transformation) {
+export function addCabinet(cabinet, transformation, materials = new Materials()) {
   recipe.getParts(cabinet);
   const group = model.activeEntities.addGroup();
-  fillCabinet(group.entities, cabinet);
+  fillCabinet(materials, group.entities, cabinet);
   group.name = cabinet.name;
   group.transformation = transformation;
   entityData.set(group, /** @type {Data} */ ({ type: "cabinet", cabinet }));
@@ -258,11 +277,15 @@ export function addCabinet(cabinet, transformation) {
   return group;
 }
 
-/** Rebuilds a cabinet from new parameters. Call it inside an operation. @param {modlumi.Group} group @param {Cabinet} cabinet */
-export function rebuildCabinet(group, cabinet) {
+/**
+ * Rebuilds a cabinet from new parameters. Call it inside an operation.
+ * @param {modlumi.Group} group @param {Cabinet} cabinet
+ * @param {Materials} [materials] The operation's materials, when it builds more than this cabinet.
+ */
+export function rebuildCabinet(group, cabinet, materials = new Materials()) {
   recipe.getParts(cabinet);
   clear(group);
-  fillCabinet(group.entities, cabinet);
+  fillCabinet(materials, group.entities, cabinet);
   group.name = cabinet.name;
   entityData.set(group, /** @type {Data} */ ({ type: "cabinet", cabinet }));
 }
@@ -279,7 +302,8 @@ export function changeCabinets(name, groups, change) {
     return { group, cabinet };
   });
   model.operation(name, () => {
-    for (const { group, cabinet } of updates) rebuildCabinet(group, cabinet);
+    const materials = new Materials();
+    for (const { group, cabinet } of updates) rebuildCabinet(group, cabinet, materials);
   });
 }
 
@@ -367,10 +391,13 @@ export function alignRow(groups, gap, align) {
 
 // ---------------------------------------------------------------------- continuous worktop
 
-/** Fills an empty worktop group's entities. @param {modlumi.Entities} entities @param {Worktop} worktop */
-function fillWorktop(entities, worktop) {
+/**
+ * Fills an empty worktop group's entities.
+ * @param {Materials} materials @param {modlumi.Entities} entities @param {Worktop} worktop
+ */
+function fillWorktop(materials, entities, worktop) {
   const [slab, ...rest] = recipe.getWorktopParts(worktop);
-  let top = addPart(entities, slab, worktop);
+  let top = addPart(materials, entities, slab, worktop);
   for (const cut of worktop.cutouts) {
     // Taller than the slab, so the boolean leaves no skin.
     const cutter = entities.addBox([cut.x, cut.y - worktop.overhang, -0.01], cut.width, cut.depth,
@@ -378,8 +405,8 @@ function fillWorktop(entities, worktop) {
     top = entities.subtract(top, cutter);
   }
   top.name = slab.name;
-  top.material = getPartMaterial("top", worktop);
-  for (const part of rest) addPart(entities, part, worktop);
+  top.material = getPartMaterial(materials, "top", worktop);
+  for (const part of rest) addPart(materials, entities, part, worktop);
 }
 
 /** Rebuilds a worktop from new parameters, in one undo step. @param {modlumi.Group} group @param {Worktop} worktop */
@@ -387,7 +414,7 @@ export function rebuildWorktop(group, worktop) {
   recipe.validateWorktop(worktop);
   model.operation(t("Edit Worktop"), () => {
     clear(group);
-    fillWorktop(group.entities, worktop);
+    fillWorktop(new Materials(), group.entities, worktop);
     entityData.set(group, /** @type {Data} */ ({ type: "worktop", worktop }));
   });
 }
@@ -443,10 +470,11 @@ export function addWorktop(groups, oldWorktops, worktop, pose) {
     .filter(({ cabinet }) => cabinet.worktop)
     .map(({ group, cabinet }) => ({ group, cabinet: { ...cabinet, worktop: false } }));
   return model.operation(t("Continuous Worktop"), () => {
+    const materials = new Materials();
     for (const top of old) model.activeEntities.erase(top);
-    for (const { group, cabinet } of updates) rebuildCabinet(group, cabinet);
+    for (const { group, cabinet } of updates) rebuildCabinet(group, cabinet, materials);
     const group = model.activeEntities.addGroup();
-    fillWorktop(group.entities, worktop);
+    fillWorktop(materials, group.entities, worktop);
     group.name = t("Continuous worktop");
     group.transformation = pose;
     entityData.set(group, /** @type {Data} */ ({ type: "worktop", worktop }));
