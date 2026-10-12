@@ -301,7 +301,11 @@ export function getParts(c) {
   const front = (name, x0, x1, z0, z1, { right = false, glass = false, drawer = false } = {}) => {
     /** @type {Part[]} */
     const list = [];
-    const of = (/** @type {string} */ part) => t("{front} {part}", { front: name, part });
+    // French reads "Poignée tiroir 1" where English reads "Drawer 1 handle".
+    const of = (/** @type {string} */ part) => t("{front} {part}", {
+      front: name, part, Part: part.charAt(0).toUpperCase() + part.slice(1),
+      lowerFront: name.charAt(0).toLowerCase() + name.slice(1),
+    });
     if (glass) {
       const f = Math.min(mm(45), (x1 - x0) / 4, (z1 - z0) / 4);
       box(list, of(t("left frame")), "front", x0, 0, z0, x0 + f, th, z1);

@@ -64,7 +64,7 @@ const kFrench = {
   "Recessed plinth": "Plinthe en retrait",
   "Leg {i}-{j}": "Pied {i}-{j}",
   "Shelf {n}": "Étagère {n}",
-  "{front} {part}": "{front} {part}",
+  "{front} {part}": "{Part} {lowerFront}",
   "left frame": "cadre gauche",
   "right frame": "cadre droit",
   "bottom frame": "cadre bas",
