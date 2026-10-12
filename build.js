@@ -165,12 +165,8 @@ export function getWorldBounds(places) {
 
 // ------------------------------------------------------------------------------- materials
 
-/** KitchenMaker's materials found so far, by key. @type {Map<string, modlumi.Material>} */
-const materials = new Map();
-
 /** Whether a material is KitchenMaker's of that key. @param {modlumi.Material} material @param {string} key */
 const isMaterialOf = (material, key) => {
-  if (!material.isValid) return false;
   const data = /** @type {MaterialData | undefined} */ (entityData.get(material));
   return data?.type === "material" && data.key === key;
 };
@@ -179,18 +175,16 @@ const isMaterialOf = (material, key) => {
  * KitchenMaker's material of that key, added with the name and color when the model has none. It
  * is known by its entity data, not its name, so a user material of the same name stays apart and
  * switching languages doesn't add another. The user may rename or repaint it, and every cabinet
- * that uses it follows.
+ * that uses it follows. It is looked up in the model each time rather than kept, because the
+ * plugin outlives the document and a handle from a closed one can't be used.
  * @param {string} key @param {string} name @param {{ r: number, g: number, b: number, a?: number }} color
  */
 function getMaterial(key, name, color) {
-  const known = materials.get(key);
-  if (known !== undefined && isMaterialOf(known, key)) return known;
   let material = model.materials.find((m) => isMaterialOf(m, key));
   if (material === undefined) {
     material = model.addMaterial(name, { color });
     entityData.set(material, /** @type {MaterialData} */ ({ type: "material", key }));
   }
-  materials.set(key, material);
   return material;
 }
 
