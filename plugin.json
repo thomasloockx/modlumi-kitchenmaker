@@ -6,7 +6,7 @@
   "author": "IngeTrazo (KitchenMaker V.2 for SketchUp), adapted for Modlumi",
   "license": "GPL-3.0-or-later",
   "apiVersion": 1,
-  "requires": ["viewport", "files", "toolSelection", "propertiesWhen", "previewBoxes", "materialLookup",
+  "requires": ["viewport", "files", "toolSelection", "propertiesWhen", "previewBoxes",
     "formValidation", "listWidget", "locale", "numberFormat"],
   "permissions": {
     "files.dialog": true
