@@ -16,9 +16,15 @@ stay in English, so a model opens in any language.
 
 ## Installation
 
-In Modlumi Desktop, choose **Extensions › Manage Extensions... › Install plugin...** and pick this
-folder's `plugin.json`. Allow file dialogs to export CSV files; without that permission the export
-buttons stay greyed out and say why.
+1. On this page, click **Code › Download ZIP**.
+2. In Modlumi Desktop, choose **Extensions › Manage Extensions... › Install plugin...** and pick
+   the zip you downloaded, `modlumi-kitchenmaker-main.zip`. You don't need to unzip it.
+3. Click **Install**. Allow file dialogs to export CSV files; without that permission the export
+   buttons stay greyed out and say why.
+
+Don't download `plugin.json` on its own: choosing it installs every file in the folder it is in,
+such as your whole Downloads folder. If you cloned this repository, picking `plugin.json` in the
+clone works. See [Install a plugin from GitHub](https://modlumi.com/docs/user-guide/plugins/#install-a-plugin-from-github).
 
 KitchenMaker needs a Modlumi version with the plugin features `viewport`, `files`,
 `toolSelection`, `propertiesWhen`, `previewBoxes`, `formValidation`, `listWidget`, `locale`,
